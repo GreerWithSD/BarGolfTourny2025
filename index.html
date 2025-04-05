@@ -3,27 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bar Golf Score Tracker</title>
+  <title>Bar Golf Tracker</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f0f0f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212;
+      color: #fff;
+      padding: 30px;
+      margin: 0;
     }
 
     h1 {
       text-align: center;
+      font-size: 2.5em;
+      background: linear-gradient(90deg, #ff00cc, #3333ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 30px;
     }
 
     input, button {
-      padding: 8px;
-      margin: 5px;
+      padding: 10px 15px;
+      margin: 8px;
       font-size: 16px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    input[type="text"], input[type="number"] {
+      background: #1e1e1e;
+      color: #fff;
+      border: 1px solid #333;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      border-color: #ff00cc;
+      outline: none;
+      box-shadow: 0 0 5px #ff00cc;
+    }
+
+    button {
+      background: #ff00cc;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #e600b8;
     }
 
     .scorecard {
       margin-top: 20px;
       overflow-x: auto;
+      background-color: #1a1a1a;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 0, 204, 0.2);
     }
 
     table {
@@ -33,29 +70,41 @@
     }
 
     th, td {
-      border: 1px solid #ccc;
+      border: 1px solid #333;
       padding: 10px;
       text-align: center;
     }
 
     th {
-      background-color: #333;
-      color: white;
+      background: linear-gradient(135deg, #ff00cc, #3333ff);
+      color: #fff;
     }
 
     td input {
-      width: 50px;
+      width: 100%;
+      background-color: #2a2a2a;
+      color: #fff;
+      border: none;
+      padding: 6px;
+      border-radius: 4px;
+      text-align: center;
     }
 
     .player-total {
       font-weight: bold;
-      background-color: #e0ffe0;
+      background-color: #222;
+      color: #00ff88;
+    }
+
+    label {
+      font-size: 1.2em;
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Bar Golf Score Tracker</h1>
+  <h1>🍻 Bar Golf Score Tracker</h1>
 
   <label>Player Names (comma-separated):</label><br>
   <input type="text" id="playerNames" placeholder="e.g. Chad, Tasha, Rick">
@@ -64,7 +113,7 @@
   <div class="scorecard" id="scorecardContainer"></div>
 
   <script>
-    const bars = 9; // or change to 18 for full golf!
+    const bars = 9;
 
     function createScorecard() {
       const input = document.getElementById("playerNames").value;
@@ -72,26 +121,34 @@
       if (names.length === 0) return;
 
       const container = document.getElementById("scorecardContainer");
-      container.innerHTML = ""; // Clear previous
+      container.innerHTML = "";
 
       const table = document.createElement("table");
-      const header = document.createElement("tr");
 
-      header.innerHTML = `<th>Bar #</th><th>Par (sips)</th>` + names.map(name => `<th>${name}</th>`).join("");
+      const header = document.createElement("tr");
+      header.innerHTML = `
+        <th>#</th>
+        <th>Bar Name</th>
+        <th>Drink</th>
+        <th>Par (sips)</th>
+      ` + names.map(name => `<th>${name}</th>`).join("");
       table.appendChild(header);
 
       for (let i = 1; i <= bars; i++) {
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>Bar ${i}</td>
+          <td>${i}</td>
+          <td><input type="text" placeholder="Bar ${i}"></td>
+          <td><input type="text" placeholder="Drink"></td>
           <td><input type="number" value="3" class="par" onchange="updateTotals()"></td>
         ` + names.map(() => `<td><input type="number" value="0" class="score" onchange="updateTotals()"></td>`).join("");
         table.appendChild(row);
       }
 
-      // Totals row
       const totalRow = document.createElement("tr");
-      totalRow.innerHTML = `<td colspan="2"><strong>Total</strong></td>` + names.map(() => `<td class="player-total">0</td>`).join("");
+      totalRow.innerHTML = `
+        <td colspan="4"><strong>Total</strong></td>
+      ` + names.map(() => `<td class="player-total">0</td>`).join("");
       table.appendChild(totalRow);
 
       container.appendChild(table);
@@ -101,22 +158,23 @@
       const table = document.querySelector("table");
       if (!table) return;
 
-      const rows = Array.from(table.rows).slice(1, -1); // skip header and totals
+      const rows = Array.from(table.rows).slice(1, -1);
       const totals = [];
 
       rows.forEach(row => {
-        const cells = Array.from(row.cells).slice(2); // skip Bar # and Par
-        cells.forEach((cell, idx) => {
-          const val = parseInt(cell.querySelector("input").value) || 0;
+        const scoreInputs = Array.from(row.cells).slice(4).map(cell => cell.querySelector("input"));
+        scoreInputs.forEach((input, idx) => {
+          const val = parseInt(input.value) || 0;
           totals[idx] = (totals[idx] || 0) + val;
         });
       });
 
-      const totalCells = table.rows[table.rows.length - 1].querySelectorAll(".player-total");
+      const totalCells = table.querySelectorAll(".player-total");
       totalCells.forEach((cell, idx) => {
         cell.textContent = totals[idx] || 0;
       });
     }
   </script>
+
 </body>
 </html>
