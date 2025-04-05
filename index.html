@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bar Golf Score Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    input, button {
+      padding: 8px;
+      margin: 5px;
+      font-size: 16px;
+    }
+
+    .scorecard {
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #333;
+      color: white;
+    }
+
+    td input {
+      width: 50px;
+    }
+
+    .player-total {
+      font-weight: bold;
+      background-color: #e0ffe0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Bar Golf Score Tracker</h1>
+
+  <label>Player Names (comma-separated):</label><br>
+  <input type="text" id="playerNames" placeholder="e.g. Chad, Tasha, Rick">
+  <button onclick="createScorecard()">Create Scorecard</button>
+
+  <div class="scorecard" id="scorecardContainer"></div>
+
+  <script>
+    const bars = 9; // or change to 18 for full golf!
+
+    function createScorecard() {
+      const input = document.getElementById("playerNames").value;
+      const names = input.split(",").map(n => n.trim()).filter(n => n);
+      if (names.length === 0) return;
+
+      const container = document.getElementById("scorecardContainer");
+      container.innerHTML = ""; // Clear previous
+
+      const table = document.createElement("table");
+      const header = document.createElement("tr");
+
+      header.innerHTML = `<th>Bar #</th><th>Par (sips)</th>` + names.map(name => `<th>${name}</th>`).join("");
+      table.appendChild(header);
+
+      for (let i = 1; i <= bars; i++) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>Bar ${i}</td>
+          <td><input type="number" value="3" class="par" onchange="updateTotals()"></td>
+        ` + names.map(() => `<td><input type="number" value="0" class="score" onchange="updateTotals()"></td>`).join("");
+        table.appendChild(row);
+      }
+
+      // Totals row
+      const totalRow = document.createElement("tr");
+      totalRow.innerHTML = `<td colspan="2"><strong>Total</strong></td>` + names.map(() => `<td class="player-total">0</td>`).join("");
+      table.appendChild(totalRow);
+
+      container.appendChild(table);
+    }
+
+    function updateTotals() {
+      const table = document.querySelector("table");
+      if (!table) return;
+
+      const rows = Array.from(table.rows).slice(1, -1); // skip header and totals
+      const totals = [];
+
+      rows.forEach(row => {
+        const cells = Array.from(row.cells).slice(2); // skip Bar # and Par
+        cells.forEach((cell, idx) => {
+          const val = parseInt(cell.querySelector("input").value) || 0;
+          totals[idx] = (totals[idx] || 0) + val;
+        });
+      });
+
+      const totalCells = table.rows[table.rows.length - 1].querySelectorAll(".player-total");
+      totalCells.forEach((cell, idx) => {
+        cell.textContent = totals[idx] || 0;
+      });
+    }
+  </script>
+</body>
+</html>
