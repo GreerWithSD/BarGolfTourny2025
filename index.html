@@ -100,6 +100,10 @@
       font-size: 1.2em;
       margin-right: 10px;
     }
+
+    .buttons {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -108,17 +112,27 @@
 
   <label>Player Names (comma-separated):</label><br>
   <input type="text" id="playerNames" placeholder="e.g. Chad, Tasha, Rick">
-  <button onclick="createScorecard()">Create Scorecard</button>
+  <div class="buttons">
+    <button onclick="createScorecard()">Create Scorecard</button>
+    <button onclick="saveScores()">💾 Save</button>
+    <button onclick="loadScores()">📂 Load</button>
+  </div>
 
   <div class="scorecard" id="scorecardContainer"></div>
 
   <script>
     const bars = 9;
 
-    function createScorecard() {
-      const input = document.getElementById("playerNames").value;
-      const names = input.split(",").map(n => n.trim()).filter(n => n);
-      if (names.length === 0) return;
+    function createScorecard(data = null) {
+      let names;
+      if (data) {
+        names = data.names;
+        document.getElementById("playerNames").value = names.join(", ");
+      } else {
+        const input = document.getElementById("playerNames").value;
+        names = input.split(",").map(n => n.trim()).filter(n => n);
+        if (names.length === 0) return;
+      }
 
       const container = document.getElementById("scorecardContainer");
       container.innerHTML = "";
@@ -134,14 +148,19 @@
       ` + names.map(name => `<th>${name}</th>`).join("");
       table.appendChild(header);
 
-      for (let i = 1; i <= bars; i++) {
+      for (let i = 0; i < bars; i++) {
         const row = document.createElement("tr");
+        const barName = data ? data.rows[i].barName : "";
+        const drink = data ? data.rows[i].drink : "";
+        const par = data ? data.rows[i].par : 3;
+        const scores = data ? data.rows[i].scores : names.map(() => 0);
+
         row.innerHTML = `
-          <td>${i}</td>
-          <td><input type="text" placeholder="Bar ${i}"></td>
-          <td><input type="text" placeholder="Drink"></td>
-          <td><input type="number" value="3" class="par" onchange="updateTotals()"></td>
-        ` + names.map(() => `<td><input type="number" value="0" class="score" onchange="updateTotals()"></td>`).join("");
+          <td>${i + 1}</td>
+          <td><input type="text" value="${barName}" placeholder="Bar ${i + 1}"></td>
+          <td><input type="text" value="${drink}" placeholder="Drink"></td>
+          <td><input type="number" value="${par}" class="par" onchange="updateTotals()"></td>
+        ` + scores.map(score => `<td><input type="number" value="${score}" class="score" onchange="updateTotals()"></td>`).join("");
         table.appendChild(row);
       }
 
@@ -152,6 +171,7 @@
       table.appendChild(totalRow);
 
       container.appendChild(table);
+      updateTotals();
     }
 
     function updateTotals() {
@@ -174,7 +194,43 @@
         cell.textContent = totals[idx] || 0;
       });
     }
+
+    function saveScores() {
+      const table = document.querySelector("table");
+      if (!table) return;
+
+      const names = document.getElementById("playerNames").value.split(",").map(n => n.trim()).filter(n => n);
+      const rows = Array.from(table.rows).slice(1, -1);
+      const rowData = rows.map(row => {
+        const cells = row.querySelectorAll("td");
+        return {
+          barName: cells[1].querySelector("input").value,
+          drink: cells[2].querySelector("input").value,
+          par: parseInt(cells[3].querySelector("input").value) || 3,
+          scores: Array.from(cells).slice(4).map(cell => parseInt(cell.querySelector("input").value) || 0)
+        };
+      });
+
+      const data = {
+        names: names,
+        rows: rowData
+      };
+
+      localStorage.setItem("barGolfData", JSON.stringify(data));
+      alert("Scores saved! 🍻");
+    }
+
+    function loadScores() {
+      const saved = localStorage.getItem("barGolfData");
+      if (!saved) {
+        alert("No saved data found.");
+        return;
+      }
+      const data = JSON.parse(saved);
+      createScorecard(data);
+    }
   </script>
 
 </body>
 </html>
+
